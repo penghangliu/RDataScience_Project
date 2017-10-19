@@ -30,7 +30,7 @@ See [http://rmarkdown.rstudio.com/](http://rmarkdown.rstudio.com/) for all the a
 
 Here's my first code chunk.
 ```{r}
-1+2
+1+2+3
 ```
 
 Load any required packages in a code chunk (you may need to install some packages):
