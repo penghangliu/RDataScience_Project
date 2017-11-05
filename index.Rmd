@@ -1,5 +1,5 @@
 ---
-title: "I have the best titles"
+title: "Penghang's Project"
 author: Your name here
 subtitle: Subtitle here if desired
 ---
@@ -30,7 +30,7 @@ See [http://rmarkdown.rstudio.com/](http://rmarkdown.rstudio.com/) for all the a
 
 Here's my first code chunk.
 ```{r}
-1+2+3
+1+2+3+5+6+47+8+9
 ```
 
 Load any required packages in a code chunk (you may need to install some packages):
