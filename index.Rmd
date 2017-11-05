@@ -5,9 +5,20 @@ subtitle: First Draft
 ---
 
 # Introduction
-My really awesome and complete introduction will go here.  
 
-> I know words.  I have the best words.  ~ Donald Trump
+According to [the 2016 Annual DCJS Performance Report](http://www.criminaljustice.ny.gov/pio/annualreport/2016-annual-dcjs-performance-report.pdf), for the year 2016, crime in New York State reached its lowest point with 375,962 index crimes reported, the fewest since reporting began in 1975. New York is the safest large state among those in the nation with a population of more than 10 million and had the lowest incarceration rate among those states. Based on such a good news, this project conduct a simple analysis to figure out the following questions,
+
+**What is the distribution of crime rates of New York State at county level?**
+
+**What are the contributing factors to crimes in New York State among 2016?**
+
+There are many factors that can influence the crime rates, and economy and education may be the significant factors among them. In terms of economy, this project used both income inequality (Gini index) and unemployment rate as independent variables that indicate the economic condition. While for education condition, the proportion of adults without degrees higher than high school is taken as the independent variables. Therefore, the project starts with the following hypothesis,
+
+**The crime rates are high in those counties with high population density, such as Bronx, New York and Manhattan.**
+
+**All of the income inequality (Gini index), education attainment, and unemployment rate have significant contributions to crime rates.**
+
+This project provides maps for distributions of crime rates, Gini index, education attainment and unemployment rates in New York State and apply multiple regression model to study the significant contributing factor of crime rates.
 
 # Materials and methods
 Data Source:
@@ -22,9 +33,9 @@ Proposed Method:
 
 2. Data Visualizaion: Visualizing the distribution of dependent variables(Crime Rates) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.
 
-3. Multiple Regression Model: Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge to evluate the influence of these fators 
+3. Multiple Regression Model: Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.
 
-## Data
+### Data
 Loading required packages:
 ```{r, message=F, warning=F}
 library(dplyr)
