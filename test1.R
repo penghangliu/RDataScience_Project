@@ -12,7 +12,7 @@ ny<-subset(us,NAME_1=='New York')
 ny<-subset(ny,NAME_2!='Lake Ontario')
 plot(ny)
 
-CensusData <- read.csv("C:/Users/penghang/Desktop/Fall 2017/GEO 503 AW/RDataScience_Project/data/NYCensus2016.csv",stringsAsFactors = FALSE)
+CensusData <- read.csv("https://raw.githubusercontent.com/penghangliu/RDataScience_Project/master/data/NYCensus2016.csv",stringsAsFactors = FALSE)
 CrimeData <- read.csv("https://data.ny.gov/resource/vi5m-jckw.csv",stringsAsFactors = FALSE)
 
 CrimeData <- filter(CrimeData, year==2016)

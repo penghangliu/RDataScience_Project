@@ -1,81 +1,100 @@
 ---
-title: "Penghang's Project"
-author: Penghang
+title: "Crime Rates Analysis in New York States, 2016"
+author: Penghang Liu
 subtitle: First Draft
 ---
 
-# Introduction 123124
+# Introduction
 My really awesome and complete introduction will go here.  
 
 > I know words.  I have the best words.  ~ Donald Trump
 
 # Materials and methods
+Data Source:
 
-Narrative and most code will go here.  Describe what you are doing and show how to do it (with code).
+* Crime Rates Data: From [The Division of Criminal Justice Services](https://data.ny.gov/Public-Safety/Index-Violent-Property-and-Firearm-Rates-By-County/34dd-6g2j)
 
-You can do bullets like this:
+* Gini Index, Education Attainment, Unemployment Rate: From [United States Census Bureau](https://www.census.gov/quickfacts/NY)
 
-* The first most important thing
-* The second most important thing
-* The third most important thing
+Proposed Method:
 
-You can do numbers like this:
+1. Data Processing: Dowloading data, selecting information of interest, formatting data.
 
-1. The first most important thing
-2. The second most important thing
-3. The third most important thing
+2. Data Visualizaion: Visualizing the distribution of dependent variables(Crime Rates) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.
 
-See [http://rmarkdown.rstudio.com/](http://rmarkdown.rstudio.com/) for all the amazing things you can do.
+3. Multiple Regression Model: Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge to evluate the influence of these fators 
 
-
-Here's my first code chunk.
-```{r}
-1+2+3+5+6+47+8+9
-```
-
-Load any required packages in a code chunk (you may need to install some packages):
-
+## Data
+Loading required packages:
 ```{r, message=F, warning=F}
 library(dplyr)
-library(ggplot2)
-library(maps)
-library(spocc)
-knitr::opts_chunk$set(cache=TRUE)  # cache the results for quick compiling
+library(sp)
+library(maptools)
+library(gstat)
+library(rgdal)
+library(raster)
+library(tigris)
+library(RColorBrewer)
 ```
 
+DownLoad Data:
+```{r, message=F, warning=F}
+#Download Spatial Data using raster package.
+us=getData('GADM', country='USA', level=2) #Download US Boundaries
+ny<-subset(us,NAME_1=='New York')          #Subset New York state
+ny<-subset(ny,NAME_2!='Lake Ontario')      #Remove Ontario Lake
+plot(ny)
 
-We are going to use the `occ()` function to download _occurrence_ records for the American robin (_Turdus migratorius_) from the [Global Biodiversity Information Facility](gbif.org).
-
-<img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/Turdus-migratorius-002.jpg" alt="alt text" width="200">
-<small><small><small>Licensed under CC BY-SA 3.0 via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Turdus-migratorius-002.jpg#/media/File:Turdus-migratorius-002.jpg)</small></small></small>
-
-```{r, warning=F} 
-## define which species to query
-sp='Turdus migratorius'
-
-## run the query and convert to data.frame()
-d = occ(query=sp, from='ebird',limit = 100) %>% occ2df()
-```
-This can take a few seconds.
-
-```{r, fig.width=6, fig.height=3, fig.cap="Map illustrating the known occurrence locations"}
-# Load coastline
-map=map_data("world")
-
-ggplot(d,aes(x=longitude,y=latitude))+
-  geom_polygon(aes(x=long,y=lat,group=group),data=map)+
-  geom_point(col="red")+
-  coord_equal()
+#Reading Census in the data folder
+CensusData <- read.csv("https://raw.githubusercontent.com/penghangliu/RDataScience_Project/master/data/NYCensus2016.csv",stringsAsFactors = FALSE)
+#Download Crime data from New York State Gov
+CrimeData <- read.csv("https://data.ny.gov/resource/vi5m-jckw.csv",stringsAsFactors = FALSE)
 ```
 
+Data Wrangling:
+```{r, message=F, warning=F}
+CrimeData <- filter(CrimeData, year==2016)
+CrimeData$county[CrimeData$county=='St Lawrence']<-'Saint Lawrence'
 
+data<-left_join(CrimeData,CensusData,by="county")
+data_merge <- geo_join(ny, data, "NAME_2", "county")
+```
+
+These are the variables in the data:
+```{r}
+names(data_merge)
+```
+
+Data Visualization:
+```{r, message=F, warning=F}
+spplot(data_merge["index_rate"], 
+       col.regions = brewer.pal(n = 9, name = "OrRd"), 
+       cuts = 8, 
+       main = "Crime Rates in 2016")
+
+spplot(data_merge["Gini_Index"], 
+       col.regions = brewer.pal(n = 9, name = "OrRd"), 
+       cuts = 8, 
+       main = "Gini Index in 2016")
+
+spplot(data_merge["under_highschool"], 
+       col.regions = brewer.pal(n = 9, name = "OrRd"), 
+       cuts = 8, 
+       main = "Education Attainment (Under Highschool) in 2016")
+
+spplot(data_merge["unemployment"], 
+       col.regions = brewer.pal(n = 9, name = "GnBu"), 
+       cuts = 8, 
+       main = "Unemployment Rates in 2016")
+```
 # Results
 
-Show tables, plots, etc. and describe them.
+To be continued...
 
 # Conclusions
 
-What have you learned?  Are there any broader implications?
+To be continued...
 
 # References
 
+To be continued...
