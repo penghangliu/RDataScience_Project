@@ -98,6 +98,7 @@ spplot(data_merge["unemployment"],
        cuts = 8, 
        main = "Unemployment Rates in 2016")
 ```
+
 # Results
 
 To be continued...
