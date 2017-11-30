@@ -326,8 +326,8 @@ div.tocify {
 <li><p>Data Visualizaion: Visualizing the distribution of dependent variables(Crime Rates) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.</p></li>
 <li><p>Multiple Regression Model: Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.</p></li>
 </ol>
-<div id="data" class="section level3">
-<h3>Data</h3>
+<div id="data" class="section level2">
+<h2>Data</h2>
 <p>Loading required packages:</p>
 <pre class="r"><code>library(dplyr)
 library(sp)
@@ -336,7 +336,11 @@ library(gstat)
 library(rgdal)
 library(raster)
 library(tigris)
-library(RColorBrewer)</code></pre>
+library(RColorBrewer)
+library(DT)
+library(leaflet)
+library(widgetframe)
+library(ggmap)</code></pre>
 <p>DownLoad Data:</p>
 <pre class="r"><code>#Download Spatial Data using raster package.
 us=getData(&#39;GADM&#39;, country=&#39;USA&#39;, level=2) #Download US Boundaries

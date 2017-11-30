@@ -35,7 +35,7 @@ Proposed Method:
 
 3. Multiple Regression Model: Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.
 
-### Data
+## Data
 Loading required packages:
 ```{r, message=F, warning=F}
 library(dplyr)
@@ -46,6 +46,10 @@ library(rgdal)
 library(raster)
 library(tigris)
 library(RColorBrewer)
+library(DT)
+library(leaflet)
+library(widgetframe)
+library(ggmap)
 ```
 
 DownLoad Data:
