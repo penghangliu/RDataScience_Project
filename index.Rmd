@@ -86,7 +86,8 @@ names(data_merge)
 
 Table 1. Crimes, Income Inequality, Education Attainment, Unemployment in New York State, 2016
 ```{r}
-datatable(data)
+data1 <- subset(data, select = c(county,index_rate,violent_rate,firearm_rate,property_rate,Gini_Index,under_highschool,unemployment))
+datatable(data1)
 ```
 
 **2. Data Visualizaion:** Visualizing the distribution of dependent variables(Crime Rates, including all crimes, violent crimes, firearm crimes, and property crimes) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.
