@@ -1,7 +1,7 @@
 ---
 title: "Crime Rates Analysis in New York States, 2016"
 author: Penghang Liu
-subtitle: First Draft
+subtitle: Second Draft
 ---
 
 # Introduction
@@ -18,24 +18,12 @@ There are many factors that can influence the crime rates, and economy and educa
 
 **All of the income inequality (Gini index), education attainment, and unemployment rate have significant contributions to crime rates.**
 
-This project provides maps for distributions of crime rates, Gini index, education attainment and unemployment rates in New York State and apply multiple regression model to study the significant contributing factor of crime rates.
+This project provides maps for distributions of crime rates, Gini index, education attainment and unemployment rates in New York State and apply generalized additive models to study the significant contributing factor of crime rates.
 
 # Materials and methods
-Data Source:
 
-* Crime Rates Data: From [The Division of Criminal Justice Services](https://data.ny.gov/Public-Safety/Index-Violent-Property-and-Firearm-Rates-By-County/34dd-6g2j)
+##R Packages
 
-* Gini Index, Education Attainment, Unemployment Rate: From [United States Census Bureau](https://www.census.gov/quickfacts/NY)
-
-Proposed Method:
-
-1. Data Processing: Dowloading data, selecting information of interest, formatting data.
-
-2. Data Visualizaion: Visualizing the distribution of dependent variables(Crime Rates) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.
-
-3. Multiple Regression Model: Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.
-
-## Data
 Loading required packages:
 ```{r, message=F, warning=F}
 library(dplyr)
@@ -46,19 +34,24 @@ library(rgdal)
 library(raster)
 library(tigris)
 library(RColorBrewer)
-library(DT)
-library(leaflet)
-library(widgetframe)
-library(ggmap)
 ```
 
-DownLoad Data:
+##Data
+###Data Source:
+
+* Crime Rates Data: From [The Division of Criminal Justice Services](https://data.ny.gov/Public-Safety/Index-Violent-Property-and-Firearm-Rates-By-County/34dd-6g2j)
+
+The UCR reporting system collects information on seven crimes classified as Index offenses which are most commonly used to gauge overall crime volume. These include the violent crimes of murder/non-negligent manslaughter, forcible rape, robbery, and aggravated assault; and the property crimes of burglary, larceny, and motor vehicle theft. Firearm counts are derived from taking the number of violent crimes which involve a firearm. Population data are provided every year by the FBI, based on US Census information.
+
+* Gini Index, Education Attainment, Unemployment Rate: From [United States Census Bureau](https://www.census.gov/quickfacts/NY)
+
+###DownLoad Data:
+
 ```{r, message=F, warning=F}
 #Download Spatial Data using raster package.
 us=getData('GADM', country='USA', level=2) #Download US Boundaries
 ny<-subset(us,NAME_1=='New York')          #Subset New York state
 ny<-subset(ny,NAME_2!='Lake Ontario')      #Remove Ontario Lake
-plot(ny)
 
 #Reading Census in the data folder
 CensusData <- read.csv("https://raw.githubusercontent.com/penghangliu/RDataScience_Project/master/data/NYCensus2016.csv",stringsAsFactors = FALSE)
@@ -66,13 +59,24 @@ CensusData <- read.csv("https://raw.githubusercontent.com/penghangliu/RDataScien
 CrimeData <- read.csv("https://data.ny.gov/resource/vi5m-jckw.csv",stringsAsFactors = FALSE)
 ```
 
-Data Wrangling:
+##Methods
+
+**1. Data Processing:** Dowloading data, selecting information of interest, formatting data.
 ```{r, message=F, warning=F}
+library(DT)
+library(leaflet)
+library(widgetframe)
+library(ggmap)
+library(xtable)
+library(mgcv)
+library(sf)
+library(car)
+
 CrimeData <- filter(CrimeData, year==2016)
 CrimeData$county[CrimeData$county=='St Lawrence']<-'Saint Lawrence'
 
 data<-left_join(CrimeData,CensusData,by="county")
-data_merge <- geo_join(ny, data, "NAME_2", "county")
+data_merge <- geo_join(ny, data, "NAME_2", "county") %>% st_as_sf()
 ```
 
 These are the variables in the data:
@@ -80,37 +84,165 @@ These are the variables in the data:
 names(data_merge)
 ```
 
-Data Visualization:
-```{r, message=F, warning=F}
-spplot(data_merge["index_rate"], 
-       col.regions = brewer.pal(n = 9, name = "OrRd"), 
-       cuts = 8, 
-       main = "Crime Rates in 2016")
-
-spplot(data_merge["Gini_Index"], 
-       col.regions = brewer.pal(n = 9, name = "OrRd"), 
-       cuts = 8, 
-       main = "Gini Index in 2016")
-
-spplot(data_merge["under_highschool"], 
-       col.regions = brewer.pal(n = 9, name = "OrRd"), 
-       cuts = 8, 
-       main = "Education Attainment (Under Highschool) in 2016")
-
-spplot(data_merge["unemployment"], 
-       col.regions = brewer.pal(n = 9, name = "GnBu"), 
-       cuts = 8, 
-       main = "Unemployment Rates in 2016")
+Table 1. Crimes, Income Inequality, Education Attainment, Unemployment in New York State, 2016
+```{r}
+datatable(data)
 ```
+
+**2. Data Visualizaion:** Visualizing the distribution of dependent variables(Crime Rates, including all crimes, violent crimes, firearm crimes, and property crimes) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.
+
+**3. Generalized Additive Models:** Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.
+
+Scaling the independent variables
+```{r}
+data_merge=mutate(data_merge,Gini_index=as.numeric(scale(Gini_Index)))
+data_merge=mutate(data_merge,Under_highschool=as.numeric(scale(under_highschool)))
+data_merge=mutate(data_merge,Unemployment=as.numeric(scale(unemployment)))
+```
+
+
+Building generalized additive models for all crimes, Violent Crimes, Firearm Crimes, and Property Crimes
+```{r}
+All <- gam(index_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = "gaussian")
+Violent <- gam(violent_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = "gaussian")
+Firearm <- gam(firearm_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = "gaussian")
+Property <- gam(property_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family ="gaussian")
+```
+
+
 
 # Results
 
-To be continued...
+##Distribution of Crime Rates in New York State, 2016
+```{r}
+st_transform(data_merge,"+proj=longlat +datum=WGS84")%>%
+  leaflet() %>% addTiles() %>%
+  addPolygons(label=paste(data_merge$county," (Crime Rates=",data_merge$index_rate,")"),
+              group = "All Crimess",
+              color = "white", 
+              dashArray = "3",
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile("YlOrRd", index_rate)(index_rate),
+              highlightOptions = highlightOptions(color = "white", weight = 3,
+                                                  bringToFront = TRUE))%>%
+  addPolygons(label=paste(data_merge$county," (Crime Rates=",data_merge$violent_rate,")"),
+              group = "Violent Crimes",
+              color = "white", 
+              dashArray = "3",
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile("YlOrRd", violent_rate)(violent_rate),
+              highlightOptions = highlightOptions(color = "white", weight = 3,
+                                                  bringToFront = TRUE))%>%
+  addPolygons(label=paste(data_merge$county," (Crime Rates=",data_merge$firearm_rate,")"),
+              group = "Firearm Crimes",
+              color = "white", 
+              dashArray = "3",
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile("YlOrRd", firearm_rate)(firearm_rate),
+              highlightOptions = highlightOptions(color = "white", weight = 3,
+                                                  bringToFront = TRUE))%>%
+  addPolygons(label=paste(data_merge$county," (Crime Rates=",data_merge$property_rate,")"),
+              group = "Property Crimes",
+              color = "white", 
+              dashArray = "3",
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile("YlOrRd", property_rate)(property_rate),
+              highlightOptions = highlightOptions(color = "white", weight = 3,
+                                                  bringToFront = TRUE))%>%
+  addPolygons(label=paste(data_merge$county," (Gini Index=",data_merge$Gini_Index,")"),
+              group = "Income Inequality",
+              color = "white", 
+              dashArray = "3",
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile("YlOrRd", Gini_Index)(Gini_Index),
+              highlightOptions = highlightOptions(color = "white", weight = 3,
+                                                  bringToFront = TRUE))%>%
+  addPolygons(label=paste(data_merge$county," (Under Highschool=",data_merge$under_highschool,"%)"),
+              group = "Education Attainment",
+              color = "white", 
+              dashArray = "3",
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile("YlOrRd", under_highschool)(under_highschool),
+              highlightOptions = highlightOptions(color = "white", weight = 3,
+                                                  bringToFront = TRUE))%>%
+  addPolygons(label=paste(data_merge$county," (Unemployment Rates=",100*data_merge$unemployment,"%)"),
+              group = "Unemployment Rates",
+              color = "white", 
+              dashArray = "3",
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile("YlOrRd", unemployment)(unemployment),
+              highlightOptions = highlightOptions(color = "white", weight = 3,
+                                                  bringToFront = TRUE))%>%
+  addLayersControl(
+    baseGroups = c("All Crimes", "Violent Crimes", "Firearm Crimes", "Property Crimes", "Income Inequality","Education Attainment","Unemployment Rates"),
+    options = layersControlOptions(collapsed = FALSE)
+  )%>%
+  addMiniMap()%>%
+  frameWidget(height = 600)
+```
+
+##All crimes model
+```{r}
+summary(All)$p.table
+```
+
+##Violent Crimes model
+```{r}
+summary(Violent)$p.table
+```
+
+##Firearm Crimes model
+```{r}
+summary(Firearm)$p.table
+```
+
+##Property Crimes model
+```{r}
+summary(Property)$p.table
+```
+
+##Comparing 4 models
+```{r, message=F, warning=F}
+datatable(AIC(All,Violent,Firearm,Property))
+```
 
 # Conclusions
+The crimes rates distribution maps indicate that there are four spatial cluster with high value of crime rates, which are the western part, central part, Eastern part of New York State and New York City. 
 
-To be continued...
+Taking Gini index, under high school education attainment rate, and unemployment rate as independent variables, the generalized additive model of this project good confidence to fit the violent crimes, with adjusted R squared 0.5077 and relatively low p-value for the independent variables. However, this regression model does not fit with all crimes, firearm crime, as well as property crimes.
+
+According to the generalized additive model, both income inequality (Gini Index) and poor education attainment (under high school rate) have significant positive contribution to the violent crime, while unemployment rate has slight positive contribution to crime rates.
+
+While the generalized additive model does possess the power to explain the violent crime, it has poor ability to estimate other type of crimes. Therefore, this regression model still need to be improve by taking other independent variable into the model.
+
+
 
 # References
 
-To be continued...
+[1]Hsieh, Ching-Chi, and Meredith D. Pugh. "Poverty, income inequality, and violent crime: a meta-analysis of recent aggregate data studies." Criminal Justice Review 18.2 (1993): 182-202.
+
+[2]Rogerson, Peter. Statistical methods for geography. Sage, 2001.
+
+[3]Morenoff, Jeffrey D., and Robert J. Sampson. "Violent crime and the spatial dynamics of neighborhood transition: Chicago, 1970-1990." Social forces (1997): 31-64.
+

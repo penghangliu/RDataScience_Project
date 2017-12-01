@@ -14,7 +14,7 @@
 
 <title>Crime Rates Analysis in New York States, 2016</title>
 
-<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jquery-1.12.4/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/simplex.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
@@ -26,6 +26,14 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-1.1/textmate.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<script src="site_libs/htmlwidgets-0.9/htmlwidgets.js"></script>
+<script src="site_libs/datatables-binding-0.2/datatables.js"></script>
+<link href="site_libs/dt-core-1.10.12/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="site_libs/dt-core-1.10.12/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="site_libs/dt-core-1.10.12/js/jquery.dataTables.min.js"></script>
+<script src="site_libs/blazy-1.8.2/blazy.min.js"></script>
+<script src="site_libs/pymjs-1.3.2/pym.v1.js"></script>
+<script src="site_libs/widgetframe-binding-0.3.0/widgetframe.js"></script>
 <link href="site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -297,7 +305,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Crime Rates Analysis in New York States, 2016</h1>
-<h3 class="subtitle"><em>First Draft</em></h3>
+<h3 class="subtitle"><em>Second Draft</em></h3>
 <h4 class="author"><em>Penghang Liu</em></h4>
 
 </div>
@@ -311,23 +319,12 @@ div.tocify {
 <p>There are many factors that can influence the crime rates, and economy and education may be the significant factors among them. In terms of economy, this project used both income inequality (Gini index) and unemployment rate as independent variables that indicate the economic condition. While for education condition, the proportion of adults without degrees higher than high school is taken as the independent variables. Therefore, the project starts with the following hypothesis,</p>
 <p><strong>The crime rates are high in those counties with high population density, such as Bronx, New York and Manhattan.</strong></p>
 <p><strong>All of the income inequality (Gini index), education attainment, and unemployment rate have significant contributions to crime rates.</strong></p>
-<p>This project provides maps for distributions of crime rates, Gini index, education attainment and unemployment rates in New York State and apply multiple regression model to study the significant contributing factor of crime rates.</p>
+<p>This project provides maps for distributions of crime rates, Gini index, education attainment and unemployment rates in New York State and apply generalized additive models to study the significant contributing factor of crime rates.</p>
 </div>
 <div id="materials-and-methods" class="section level1">
 <h1>Materials and methods</h1>
-<p>Data Source:</p>
-<ul>
-<li><p>Crime Rates Data: From <a href="https://data.ny.gov/Public-Safety/Index-Violent-Property-and-Firearm-Rates-By-County/34dd-6g2j">The Division of Criminal Justice Services</a></p></li>
-<li><p>Gini Index, Education Attainment, Unemployment Rate: From <a href="https://www.census.gov/quickfacts/NY">United States Census Bureau</a></p></li>
-</ul>
-<p>Proposed Method:</p>
-<ol style="list-style-type: decimal">
-<li><p>Data Processing: Dowloading data, selecting information of interest, formatting data.</p></li>
-<li><p>Data Visualizaion: Visualizing the distribution of dependent variables(Crime Rates) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.</p></li>
-<li><p>Multiple Regression Model: Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.</p></li>
-</ol>
-<div id="data" class="section level2">
-<h2>Data</h2>
+<div id="r-packages" class="section level2">
+<h2>R Packages</h2>
 <p>Loading required packages:</p>
 <pre class="r"><code>library(dplyr)
 library(sp)
@@ -336,28 +333,50 @@ library(gstat)
 library(rgdal)
 library(raster)
 library(tigris)
-library(RColorBrewer)
-library(DT)
-library(leaflet)
-library(widgetframe)
-library(ggmap)</code></pre>
-<p>DownLoad Data:</p>
+library(RColorBrewer)</code></pre>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<div id="data-source" class="section level3">
+<h3>Data Source:</h3>
+<ul>
+<li>Crime Rates Data: From <a href="https://data.ny.gov/Public-Safety/Index-Violent-Property-and-Firearm-Rates-By-County/34dd-6g2j">The Division of Criminal Justice Services</a></li>
+</ul>
+<p>The UCR reporting system collects information on seven crimes classified as Index offenses which are most commonly used to gauge overall crime volume. These include the violent crimes of murder/non-negligent manslaughter, forcible rape, robbery, and aggravated assault; and the property crimes of burglary, larceny, and motor vehicle theft. Firearm counts are derived from taking the number of violent crimes which involve a firearm. Population data are provided every year by the FBI, based on US Census information.</p>
+<ul>
+<li>Gini Index, Education Attainment, Unemployment Rate: From <a href="https://www.census.gov/quickfacts/NY">United States Census Bureau</a></li>
+</ul>
+</div>
+<div id="download-data" class="section level3">
+<h3>DownLoad Data:</h3>
 <pre class="r"><code>#Download Spatial Data using raster package.
 us=getData(&#39;GADM&#39;, country=&#39;USA&#39;, level=2) #Download US Boundaries
 ny&lt;-subset(us,NAME_1==&#39;New York&#39;)          #Subset New York state
 ny&lt;-subset(ny,NAME_2!=&#39;Lake Ontario&#39;)      #Remove Ontario Lake
-plot(ny)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
-<pre class="r"><code>#Reading Census in the data folder
+
+#Reading Census in the data folder
 CensusData &lt;- read.csv(&quot;https://raw.githubusercontent.com/penghangliu/RDataScience_Project/master/data/NYCensus2016.csv&quot;,stringsAsFactors = FALSE)
 #Download Crime data from New York State Gov
 CrimeData &lt;- read.csv(&quot;https://data.ny.gov/resource/vi5m-jckw.csv&quot;,stringsAsFactors = FALSE)</code></pre>
-<p>Data Wrangling:</p>
-<pre class="r"><code>CrimeData &lt;- filter(CrimeData, year==2016)
+</div>
+</div>
+<div id="methods" class="section level2">
+<h2>Methods</h2>
+<p><strong>1. Data Processing:</strong> Dowloading data, selecting information of interest, formatting data.</p>
+<pre class="r"><code>library(DT)
+library(leaflet)
+library(widgetframe)
+library(ggmap)
+library(xtable)
+library(mgcv)
+library(sf)
+library(car)
+
+CrimeData &lt;- filter(CrimeData, year==2016)
 CrimeData$county[CrimeData$county==&#39;St Lawrence&#39;]&lt;-&#39;Saint Lawrence&#39;
 
 data&lt;-left_join(CrimeData,CensusData,by=&quot;county&quot;)
-data_merge &lt;- geo_join(ny, data, &quot;NAME_2&quot;, &quot;county&quot;)</code></pre>
+data_merge &lt;- geo_join(ny, data, &quot;NAME_2&quot;, &quot;county&quot;) %&gt;% st_as_sf()</code></pre>
 <p>These are the variables in the data:</p>
 <pre class="r"><code>names(data_merge)</code></pre>
 <pre><code>##  [1] &quot;OBJECTID&quot;         &quot;ID_0&quot;             &quot;ISO&quot;             
@@ -370,41 +389,171 @@ data_merge &lt;- geo_join(ny, data, &quot;NAME_2&quot;, &quot;county&quot;)</cod
 ## [22] &quot;property_count&quot;   &quot;property_rate&quot;    &quot;violent_count&quot;   
 ## [25] &quot;violent_rate&quot;     &quot;year&quot;             &quot;Gini_Index&quot;      
 ## [28] &quot;under_highschool&quot; &quot;highschool&quot;       &quot;college&quot;         
-## [31] &quot;bachelor_above&quot;   &quot;unemployment&quot;</code></pre>
-<p>Data Visualization:</p>
-<pre class="r"><code>spplot(data_merge[&quot;index_rate&quot;], 
-       col.regions = brewer.pal(n = 9, name = &quot;OrRd&quot;), 
-       cuts = 8, 
-       main = &quot;Crime Rates in 2016&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
-<pre class="r"><code>spplot(data_merge[&quot;Gini_Index&quot;], 
-       col.regions = brewer.pal(n = 9, name = &quot;OrRd&quot;), 
-       cuts = 8, 
-       main = &quot;Gini Index in 2016&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-5-2.png" width="672" /></p>
-<pre class="r"><code>spplot(data_merge[&quot;under_highschool&quot;], 
-       col.regions = brewer.pal(n = 9, name = &quot;OrRd&quot;), 
-       cuts = 8, 
-       main = &quot;Education Attainment (Under Highschool) in 2016&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-5-3.png" width="672" /></p>
-<pre class="r"><code>spplot(data_merge[&quot;unemployment&quot;], 
-       col.regions = brewer.pal(n = 9, name = &quot;GnBu&quot;), 
-       cuts = 8, 
-       main = &quot;Unemployment Rates in 2016&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-5-4.png" width="672" /></p>
+## [31] &quot;bachelor_above&quot;   &quot;unemployment&quot;     &quot;geometry&quot;</code></pre>
+<p>Table 1. Crimes, Income Inequality, Education Attainment, Unemployment in New York State, 2016</p>
+<pre class="r"><code>datatable(data)</code></pre>
+<div id="htmlwidget-9600432ae1de766848d2" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-9600432ae1de766848d2">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62"],["Albany","Allegany","Bronx","Broome","Cattaraugus","Cayuga","Chautauqua","Chemung","Chenango","Clinton","Columbia","Cortland","Delaware","Dutchess","Erie","Essex","Franklin","Fulton","Genesee","Greene","Hamilton","Herkimer","Jefferson","Kings","Lewis","Livingston","Madison","Monroe","Montgomery","Nassau","New York","Niagara","Oneida","Onondaga","Ontario","Orange","Orleans","Oswego","Otsego","Putnam","Queens","Rensselaer","Richmond","Rockland","Saratoga","Schenectady","Schoharie","Schuyler","Seneca","Steuben","Saint Lawrence","Suffolk","Sullivan","Tioga","Tompkins","Ulster","Warren","Washington","Wayne","Westchester","Wyoming","Yates"],[124,5,null,57,12,14,61,23,4,7,11,2,4,70,1154,4,7,10,9,5,0,5,24,null,3,8,5,782,8,314,null,161,110,303,12,177,9,14,7,2,null,87,null,30,13,104,2,3,5,8,14,409,22,6,15,22,2,3,7,328,1,2],[40.2,10.7,null,29.3,16,18.1,47.2,26.7,8.3,8.7,18.1,4.2,9,23.9,125.8,10.9,14,18.8,15.5,10.6,0,8,20.5,null,11.2,12.5,7,104.9,16.3,23.2,null,76.5,47.7,65.1,11,47.1,21.9,11.8,11.7,2,null,54.6,null,9.2,5.8,67.7,6.5,16.6,14.5,8.3,12.7,27.4,29.8,12.3,14.3,12.3,3.1,4.9,7.7,33.6,2.5,8.1],[8673,570,36834,5407,1217,1427,3305,2064,965,1385,803,820,658,4109,25818,393,706,1094,1258,523,54,1060,2377,50802,233,883,1019,18652,1022,15264,46653,6135,5220,11112,1865,7321,748,2302,779,603,33800,3614,6313,3557,2807,4665,385,118,641,1489,1739,22198,1226,462,1826,2631,1195,568,1419,12529,327,320],[2812.2,1216.4,2525.9,2779.7,1619.9,1842.2,2559.3,2396.5,2000.9,1719.4,1320.6,1707.6,1475.3,1400.5,2815,1073.3,1408.2,2055.6,2161.2,1112.3,1159.5,1698.2,2030.2,1923,870.8,1375.7,1433.9,2501.7,2077.8,1125.5,2831.4,2914.6,2264.6,2386.8,1709.4,1947.1,1821.7,1935.1,1299.9,613.8,1442.2,2267.5,1327.7,1089,1242.1,3038.6,1247.6,654,1856.8,1539.5,1579.3,1486.8,1659.3,946.5,1741.2,1473.9,1865.3,921.9,1569.9,1284.8,806.8,1289.1],[308401,46858,1458255,194518,75126,77462,129139,86124,48229,80553,60806,48022,44601,293404,917172,36615,50135,53221,58209,47019,4657,62419,117080,2641827,26758,64186,71064,745585,49187,1356246,1647694,210491,230500,465564,109105,375993,41061,118961,59929,98238,2343667,159384,475474,326643,225997,153524,30860,18042,34522,96718,110113,1492991,73885,48810,104871,178502,64064,61610,90389,975138,40531,24823],[7583,490,23017,4767,1079,1243,2949,1892,866,1252,706,777,566,3544,22026,337,598,948,1132,423,49,939,2096,35279,203,792,897,16177,939,13449,37814,5290,4566,9697,1701,6393,670,2037,689,566,24444,3143,4724,3173,2555,3972,349,105,574,1302,1566,20381,1028,399,1680,2339,1084,473,1272,10420,279,303],[2458.8,1045.7,1578.4,2450.7,1436.3,1604.7,2283.6,2196.8,1795.6,1554.3,1161.1,1618,1269,1207.9,2401.5,920.4,1192.8,1781.3,1944.7,899.6,1052.2,1504.3,1790.2,1335.4,758.7,1233.9,1262.2,2169.7,1909,991.6,2295,2513.2,1980.9,2082.9,1559,1700.3,1631.7,1712.3,1149.7,576.2,1043,1972,993.5,971.4,1130.5,2587.2,1130.9,582,1662.7,1346.2,1422.2,1365.1,1391.4,817.5,1602,1310.3,1692.1,767.7,1407.3,1068.6,688.4,1220.6],[1090,80,13817,640,138,184,356,172,99,133,97,43,92,565,3792,56,108,146,126,100,5,121,281,15523,30,91,122,2475,83,1815,8839,845,654,1415,164,928,78,265,90,37,9356,471,1589,384,252,693,36,13,67,187,173,1817,198,63,146,292,111,95,147,2109,48,17],[353.4,170.7,947.5,329,183.7,237.5,275.7,199.7,205.3,165.1,159.5,89.5,206.3,192.6,413.4,152.9,215.4,274.3,216.5,212.7,107.4,193.9,240,587.6,112.1,141.8,171.7,332,168.7,133.8,536.4,401.4,283.7,303.9,150.3,246.8,190,222.8,150.2,37.7,399.2,295.5,334.2,117.6,111.5,451.4,116.7,72.1,194.1,193.3,157.1,121.7,268,129.1,139.2,163.6,173.3,154.2,162.6,216.3,118.4,68.5],[2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016,2016],[0.4532,0.41,0.5015,0.4523,0.4215,0.4152,0.4375,0.4567,0.4117,0.437,0.4573,0.4289,0.4369,0.434,0.4604,0.4168,0.4402,0.4236,0.4003,0.444,0.4332,0.4157,0.4127,0.517,0.4117,0.4059,0.4263,0.4633,0.4504,0.453,0.5988,0.4382,0.4573,0.4566,0.4365,0.4403,0.4166,0.4216,0.4365,0.4145,0.4488,0.4295,0.4461,0.4543,0.4076,0.4345,0.4134,0.4136,0.4277,0.4445,0.4556,0.4307,0.4569,0.4341,0.5021,0.4564,0.4439,0.405,0.4073,0.5375,0.3946,0.437],[7.2,11.4,29.4,10.1,12.1,12.3,11.8,10.3,12.8,14.3,11.6,10.1,13,10.1,9.6,11.2,15.1,14,9.2,13.5,9.3,10.2,10.6,20.7,11,11.4,9.6,9.8,15.7,9.2,13.4,9.5,12.2,9.8,7.7,10.9,14.6,13.6,10.1,7.6,19.6,9.2,11.3,12.7,5.9,9.5,11.8,10.1,14.7,10.7,12,10.1,14,9.1,5.8,10.3,9.1,11.5,10.4,12.5,12.8,14.2],[26.5,38.7,27.3,32.2,40.9,34.1,35.5,35.6,39.2,35.3,30.7,34.7,38.7,27,28.4,34.5,36.2,38.5,37.2,36.3,32.3,34.5,33.5,26.2,45.3,33.7,33.7,25,36.6,24.2,12.6,35.1,33.4,26.2,28.3,29.3,39.8,39.9,34.5,27.3,27.3,29,32,23,25.9,30,38.5,38.9,34.6,37.6,36.1,29.3,34,35.9,19.8,30.2,33.3,41.6,37,20.3,40.8,34.5],[27.7,29.8,24.3,30.4,29.1,32.3,31.8,30.6,30.6,28.3,28.4,31.6,28.1,29.6,30.5,30.2,31,31.3,33.5,29.7,33.9,32.8,35.2,20.2,28.5,31.3,30.5,29,31.5,23.7,14.1,32.1,31.2,30,32.2,30.6,30.2,28.9,27.7,27.2,22.7,33.2,25.9,24,29.3,30,30.2,31.6,30.4,30.4,29.5,26.6,29.8,30.6,23.6,29.4,29.4,27.5,31.9,20.5,31.2,27.5],[38.6,20,18.9,27.2,17.8,21.4,20.9,23.4,17.4,22.1,29.3,23.6,20.2,33.4,31.6,24.2,17.7,16.2,20,20.6,24.5,22.4,20.7,32.8,15.2,23.6,26.2,36.2,16.2,42.8,59.9,23.2,23.2,34.1,31.7,29.2,15.4,17.6,27.7,37.9,30.4,28.6,30.8,40.3,39,30.5,19.6,19.5,20.2,21.3,22.3,34,22.2,24.4,50.8,30.1,28.2,19.4,20.6,46.7,15.2,23.7],[0.051,0.082,0.094,0.074,0.079,0.067,0.075,0.065,0.07,0.072,0.051,0.078,0.076,0.054,0.064,0.079,0.081,0.08,0.067,0.069,0.097,0.084,0.086,0.072,0.094,0.067,0.073,0.059,0.083,0.048,0.059,0.078,0.065,0.058,0.061,0.055,0.083,0.091,0.073,0.049,0.062,0.057,0.071,0.052,0.055,0.078,0.086,0.067,0.091,0.075,0.049,0.056,0.069,0.069,0.053,0.058,0.074,0.067,0.069,0.052,0.08,0.066]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>county<\/th>\n      <th>firearm_count<\/th>\n      <th>firearm_rate<\/th>\n      <th>index_count<\/th>\n      <th>index_rate<\/th>\n      <th>population<\/th>\n      <th>property_count<\/th>\n      <th>property_rate<\/th>\n      <th>violent_count<\/th>\n      <th>violent_rate<\/th>\n      <th>year<\/th>\n      <th>Gini_Index<\/th>\n      <th>under_highschool<\/th>\n      <th>highschool<\/th>\n      <th>college<\/th>\n      <th>bachelor_above<\/th>\n      <th>unemployment<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row"}},"evals":[],"jsHooks":[]}</script>
+<p><strong>2. Data Visualizaion:</strong> Visualizing the distribution of dependent variables(Crime Rates, including all crimes, violent crimes, firearm crimes, and property crimes) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.</p>
+<p><strong>3. Generalized Additive Models:</strong> Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.</p>
+<p>Scaling the independent variables</p>
+<pre class="r"><code>data_merge=mutate(data_merge,Gini_index=as.numeric(scale(Gini_Index)))
+data_merge=mutate(data_merge,Under_highschool=as.numeric(scale(under_highschool)))
+data_merge=mutate(data_merge,Unemployment=as.numeric(scale(unemployment)))</code></pre>
+<p>Building generalized additive models for all crimes, Violent Crimes, Firearm Crimes, and Property Crimes</p>
+<pre class="r"><code>All &lt;- gam(index_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = &quot;gaussian&quot;)
+Violent &lt;- gam(violent_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = &quot;gaussian&quot;)
+Firearm &lt;- gam(firearm_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = &quot;gaussian&quot;)
+Property &lt;- gam(property_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family =&quot;gaussian&quot;)</code></pre>
 </div>
 </div>
 <div id="results" class="section level1">
 <h1>Results</h1>
-<p>To be continued…</p>
+<div id="distribution-of-crime-rates-in-new-york-state-2016" class="section level2">
+<h2>Distribution of Crime Rates in New York State, 2016</h2>
+<pre class="r"><code>st_transform(data_merge,&quot;+proj=longlat +datum=WGS84&quot;)%&gt;%
+  leaflet() %&gt;% addTiles() %&gt;%
+  addPolygons(label=paste(data_merge$county,&quot; (Crime Rates=&quot;,data_merge$index_rate,&quot;)&quot;),
+              group = &quot;All Crimess&quot;,
+              color = &quot;white&quot;, 
+              dashArray = &quot;3&quot;,
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile(&quot;YlOrRd&quot;, index_rate)(index_rate),
+              highlightOptions = highlightOptions(color = &quot;white&quot;, weight = 3,
+                                                  bringToFront = TRUE))%&gt;%
+  addPolygons(label=paste(data_merge$county,&quot; (Crime Rates=&quot;,data_merge$violent_rate,&quot;)&quot;),
+              group = &quot;Violent Crimes&quot;,
+              color = &quot;white&quot;, 
+              dashArray = &quot;3&quot;,
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile(&quot;YlOrRd&quot;, violent_rate)(violent_rate),
+              highlightOptions = highlightOptions(color = &quot;white&quot;, weight = 3,
+                                                  bringToFront = TRUE))%&gt;%
+  addPolygons(label=paste(data_merge$county,&quot; (Crime Rates=&quot;,data_merge$firearm_rate,&quot;)&quot;),
+              group = &quot;Firearm Crimes&quot;,
+              color = &quot;white&quot;, 
+              dashArray = &quot;3&quot;,
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile(&quot;YlOrRd&quot;, firearm_rate)(firearm_rate),
+              highlightOptions = highlightOptions(color = &quot;white&quot;, weight = 3,
+                                                  bringToFront = TRUE))%&gt;%
+  addPolygons(label=paste(data_merge$county,&quot; (Crime Rates=&quot;,data_merge$property_rate,&quot;)&quot;),
+              group = &quot;Property Crimes&quot;,
+              color = &quot;white&quot;, 
+              dashArray = &quot;3&quot;,
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile(&quot;YlOrRd&quot;, property_rate)(property_rate),
+              highlightOptions = highlightOptions(color = &quot;white&quot;, weight = 3,
+                                                  bringToFront = TRUE))%&gt;%
+  addPolygons(label=paste(data_merge$county,&quot; (Gini Index=&quot;,data_merge$Gini_Index,&quot;)&quot;),
+              group = &quot;Income Inequality&quot;,
+              color = &quot;white&quot;, 
+              dashArray = &quot;3&quot;,
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile(&quot;YlOrRd&quot;, Gini_Index)(Gini_Index),
+              highlightOptions = highlightOptions(color = &quot;white&quot;, weight = 3,
+                                                  bringToFront = TRUE))%&gt;%
+  addPolygons(label=paste(data_merge$county,&quot; (Under Highschool=&quot;,data_merge$under_highschool,&quot;%)&quot;),
+              group = &quot;Education Attainment&quot;,
+              color = &quot;white&quot;, 
+              dashArray = &quot;3&quot;,
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile(&quot;YlOrRd&quot;, under_highschool)(under_highschool),
+              highlightOptions = highlightOptions(color = &quot;white&quot;, weight = 3,
+                                                  bringToFront = TRUE))%&gt;%
+  addPolygons(label=paste(data_merge$county,&quot; (Unemployment Rates=&quot;,100*data_merge$unemployment,&quot;%)&quot;),
+              group = &quot;Unemployment Rates&quot;,
+              color = &quot;white&quot;, 
+              dashArray = &quot;3&quot;,
+              weight = 1, 
+              smoothFactor = 0.5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              fillColor = ~colorQuantile(&quot;YlOrRd&quot;, unemployment)(unemployment),
+              highlightOptions = highlightOptions(color = &quot;white&quot;, weight = 3,
+                                                  bringToFront = TRUE))%&gt;%
+  addLayersControl(
+    baseGroups = c(&quot;All Crimes&quot;, &quot;Violent Crimes&quot;, &quot;Firearm Crimes&quot;, &quot;Property Crimes&quot;, &quot;Income Inequality&quot;,&quot;Education Attainment&quot;,&quot;Unemployment Rates&quot;),
+    options = layersControlOptions(collapsed = FALSE)
+  )%&gt;%
+  addMiniMap()%&gt;%
+  frameWidget(height = 600)</code></pre>
+<div id="htmlwidget-cf343a0cedb4a09af9d0" style="width:100%;height:600px;" class="widgetframe html-widget"></div>
+<script type="application/json" data-for="htmlwidget-cf343a0cedb4a09af9d0">{"x":{"url":"index_files/figure-html//widgets/widget_unnamed-chunk-8.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="all-crimes-model" class="section level2">
+<h2>All crimes model</h2>
+<pre class="r"><code>summary(All)$p.table</code></pre>
+<pre><code>##                   Estimate Std. Error   t value     Pr(&gt;|t|)
+## (Intercept)      1713.7500   70.38819 24.347124 3.869829e-32
+## Gini_index        284.1923   83.77162  3.392466 1.253434e-03
+## Under_highschool  -86.5994   86.23306 -1.004248 3.194304e-01
+## Unemployment      142.5920   86.49470  1.648564 1.046440e-01</code></pre>
+</div>
+<div id="violent-crimes-model" class="section level2">
+<h2>Violent Crimes model</h2>
+<pre class="r"><code>summary(Violent)$p.table</code></pre>
+<pre><code>##                   Estimate Std. Error    t value     Pr(&gt;|t|)
+## (Intercept)      226.94355   12.76172 17.7831472 3.729477e-25
+## Gini_index        65.28806   15.18820  4.2986040 6.656778e-05
+## Under_highschool  62.46514   15.63447  3.9953467 1.845355e-04
+## Unemployment      15.60979   15.68191  0.9954013 3.236759e-01</code></pre>
+</div>
+<div id="firearm-crimes-model" class="section level2">
+<h2>Firearm Crimes model</h2>
+<pre class="r"><code>summary(Firearm)$p.table</code></pre>
+<pre><code>##                     Estimate Std. Error     t value     Pr(&gt;|t|)
+## (Intercept)      23.82981604   3.312244  7.19446256 2.193812e-09
+## Gini_index       12.00347317   4.904874  2.44725426 1.774266e-02
+## Under_highschool -5.60490140   5.571965 -1.00591103 3.190289e-01
+## Unemployment     -0.05589399   3.881774 -0.01439908 9.885657e-01</code></pre>
+</div>
+<div id="property-crimes-model" class="section level2">
+<h2>Property Crimes model</h2>
+<pre class="r"><code>summary(Property)$p.table</code></pre>
+<pre><code>##                   Estimate Std. Error   t value     Pr(&gt;|t|)
+## (Intercept)      1486.8097   61.75167 24.077238 6.976058e-32
+## Gini_index        218.9085   73.49297  2.978631 4.222046e-03
+## Under_highschool -149.0669   75.65240 -1.970418 5.357027e-02
+## Unemployment      126.9880   75.88194  1.673494 9.961569e-02</code></pre>
+</div>
+<div id="comparing-4-models" class="section level2">
+<h2>Comparing 4 models</h2>
+<pre class="r"><code>datatable(AIC(All,Violent,Firearm,Property))</code></pre>
+<div id="htmlwidget-9ac1b1f08ead2f52c70b" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-9ac1b1f08ead2f52c70b">{"x":{"filter":"none","data":[["All","Violent","Firearm","Property"],[5,5,5,5],[965.195007081927,753.455654345885,526.969338043811,948.962851994322]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>df<\/th>\n      <th>AIC<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[1,2]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row"}},"evals":[],"jsHooks":[]}</script>
+</div>
 </div>
 <div id="conclusions" class="section level1">
 <h1>Conclusions</h1>
-<p>To be continued…</p>
+<p>The crimes rates distribution maps indicate that there are four spatial cluster with high value of crime rates, which are the western part, central part, Eastern part of New York State and New York City.</p>
+<p>Taking Gini index, under high school education attainment rate, and unemployment rate as independent variables, the generalized additive model of this project good confidence to fit the violent crimes, with adjusted R squared 0.5077 and relatively low p-value for the independent variables. However, this regression model does not fit with all crimes, firearm crime, as well as property crimes.</p>
+<p>According to the generalized additive model, both income inequality (Gini Index) and poor education attainment (under high school rate) have significant positive contribution to the violent crime, while unemployment rate has slight positive contribution to crime rates.</p>
+<p>While the generalized additive model does possess the power to explain the violent crime, it has poor ability to estimate other type of crimes. Therefore, this regression model still need to be improve by taking other independent variable into the model.</p>
 </div>
 <div id="references" class="section level1">
 <h1>References</h1>
-<p>To be continued…</p>
+<p>[1]Hsieh, Ching-Chi, and Meredith D. Pugh. “Poverty, income inequality, and violent crime: a meta-analysis of recent aggregate data studies.” Criminal Justice Review 18.2 (1993): 182-202.</p>
+<p>[2]Rogerson, Peter. Statistical methods for geography. Sage, 2001.</p>
+<p>[3]Morenoff, Jeffrey D., and Robert J. Sampson. “Violent crime and the spatial dynamics of neighborhood transition: Chicago, 1970-1990.” Social forces (1997): 31-64.</p>
 </div>
 
 <!-- give the footer some space -->
