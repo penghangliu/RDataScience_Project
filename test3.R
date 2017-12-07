@@ -175,3 +175,18 @@ xtable(summary(Property)$p.table,
 
 vif(All)
 datatable(AIC(INX,VIO,FIR,POR))
+
+
+c1 <- c("All Crimes", "Violent Crimes", "Firearm Crimes", "Property Crimes")
+c2 <- c(summary(All)$r.sq, summary(Violent)$r.sq, summary(Firearm)$r.sq, summary(Property)$r.sq)
+rsq <- as.data.frame(c1,c2)
+
+x <-c("All Crimes", "Violent Crimes", "Firearm Crimes", "Property Crimes")
+y <-c(summary(All)$r.sq, summary(Violent)$r.sq, summary(Firearm)$r.sq, summary(Property)$r.sq)
+x_name <- "Model"
+y_name <- "R-squared"
+
+df <- data.frame(x,y)
+names(df) <- c(x_name,y_name)
+
+xtable(df)

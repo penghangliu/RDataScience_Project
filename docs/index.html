@@ -305,7 +305,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Crime Rates Analysis in New York States, 2016</h1>
-<h3 class="subtitle"><em>Second Draft</em></h3>
+<h3 class="subtitle"><em>Final Draft</em></h3>
 <h4 class="author"><em>Penghang Liu</em></h4>
 
 </div>
@@ -313,10 +313,10 @@ div.tocify {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>According to <a href="http://www.criminaljustice.ny.gov/pio/annualreport/2016-annual-dcjs-performance-report.pdf">the 2016 Annual DCJS Performance Report</a>, for the year 2016, crime in New York State reached its lowest point with 375,962 index crimes reported, the fewest since reporting began in 1975. New York is the safest large state among those in the nation with a population of more than 10 million and had the lowest incarceration rate among those states. Based on such a good news, this project conduct a simple analysis to figure out the following questions,</p>
+<p>According to <a href="http://www.criminaljustice.ny.gov/pio/annualreport/2016-annual-dcjs-performance-report.pdf">the 2016 Annual Division of Criminal Justice Services Performance Report</a>, for the year 2016, crime in New York State reached its lowest point with 375,962 index crimes reported, the fewest since reporting began in 1975. New York is the safest large state among those in the nation with a population of more than 10 million and had the lowest incarceration rate among those states. Based on such a good news, this project conduct a simple analysis to figure out the following questions,</p>
 <p><strong>What is the distribution of crime rates of New York State at county level?</strong></p>
 <p><strong>What are the contributing factors to crimes in New York State among 2016?</strong></p>
-<p>There are many factors that can influence the crime rates, and economy and education may be the significant factors among them. In terms of economy, this project used both income inequality (Gini index) and unemployment rate as independent variables that indicate the economic condition. While for education condition, the proportion of adults without degrees higher than high school is taken as the independent variables. Therefore, the project starts with the following hypothesis,</p>
+<p>There are many factors that can influence the crime rates, and economy and education may be the significant factors among them. In terms of economy, this project used both income inequality (Gini index, developed by the Italian statistician and sociologist Corrado Gini and published in his 1912 paper Variability and Mutability) and unemployment rate as independent variables that indicate the economic condition. While for education condition, the proportion of adults without degrees higher than high school is taken as the independent variables. Therefore, the project starts with the following hypothesis,</p>
 <p><strong>The crime rates are high in those counties with high population density, such as Bronx, New York and Manhattan.</strong></p>
 <p><strong>All of the income inequality (Gini index), education attainment, and unemployment rate have significant contributions to crime rates.</strong></p>
 <p>This project provides maps for distributions of crime rates, Gini index, education attainment and unemployment rates in New York State and apply generalized additive models to study the significant contributing factor of crime rates.</p>
@@ -362,7 +362,9 @@ CrimeData &lt;- read.csv(&quot;https://data.ny.gov/resource/vi5m-jckw.csv&quot;,
 </div>
 <div id="methods" class="section level2">
 <h2>Methods</h2>
-<p><strong>1. Data Processing:</strong> Dowloading data, selecting information of interest, formatting data.</p>
+<div id="data-processing" class="section level3">
+<h3>Data Processing</h3>
+<p>In this section, the crime data are subsetted to all crime rates, violent crime rates, firearm crime rates and property crime rates, and filtered into year 2016. Spatial data (shapefile of New York State), census data and crime data are merged into</p>
 <pre class="r"><code>library(DT)
 library(leaflet)
 library(widgetframe)
@@ -377,35 +379,29 @@ CrimeData$county[CrimeData$county==&#39;St Lawrence&#39;]&lt;-&#39;Saint Lawrenc
 
 data&lt;-left_join(CrimeData,CensusData,by=&quot;county&quot;)
 data_merge &lt;- geo_join(ny, data, &quot;NAME_2&quot;, &quot;county&quot;) %&gt;% st_as_sf()</code></pre>
-<p>These are the variables in the data:</p>
-<pre class="r"><code>names(data_merge)</code></pre>
-<pre><code>##  [1] &quot;OBJECTID&quot;         &quot;ID_0&quot;             &quot;ISO&quot;             
-##  [4] &quot;NAME_0&quot;           &quot;ID_1&quot;             &quot;NAME_1&quot;          
-##  [7] &quot;ID_2&quot;             &quot;NAME_2&quot;           &quot;HASC_2&quot;          
-## [10] &quot;CCN_2&quot;            &quot;CCA_2&quot;            &quot;TYPE_2&quot;          
-## [13] &quot;ENGTYPE_2&quot;        &quot;NL_NAME_2&quot;        &quot;VARNAME_2&quot;       
-## [16] &quot;county&quot;           &quot;firearm_count&quot;    &quot;firearm_rate&quot;    
-## [19] &quot;index_count&quot;      &quot;index_rate&quot;       &quot;population&quot;      
-## [22] &quot;property_count&quot;   &quot;property_rate&quot;    &quot;violent_count&quot;   
-## [25] &quot;violent_rate&quot;     &quot;year&quot;             &quot;Gini_Index&quot;      
-## [28] &quot;under_highschool&quot; &quot;highschool&quot;       &quot;college&quot;         
-## [31] &quot;bachelor_above&quot;   &quot;unemployment&quot;     &quot;geometry&quot;</code></pre>
 <p>Table 1. Crimes, Income Inequality, Education Attainment, Unemployment in New York State, 2016</p>
 <pre class="r"><code>data1 &lt;- subset(data, select = c(county,index_rate,violent_rate,firearm_rate,property_rate,Gini_Index,under_highschool,unemployment))
 datatable(data1)</code></pre>
-<div id="htmlwidget-b3c2790256b97bdb29ac" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b3c2790256b97bdb29ac">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62"],["Albany","Allegany","Bronx","Broome","Cattaraugus","Cayuga","Chautauqua","Chemung","Chenango","Clinton","Columbia","Cortland","Delaware","Dutchess","Erie","Essex","Franklin","Fulton","Genesee","Greene","Hamilton","Herkimer","Jefferson","Kings","Lewis","Livingston","Madison","Monroe","Montgomery","Nassau","New York","Niagara","Oneida","Onondaga","Ontario","Orange","Orleans","Oswego","Otsego","Putnam","Queens","Rensselaer","Richmond","Rockland","Saratoga","Schenectady","Schoharie","Schuyler","Seneca","Steuben","Saint Lawrence","Suffolk","Sullivan","Tioga","Tompkins","Ulster","Warren","Washington","Wayne","Westchester","Wyoming","Yates"],[2812.2,1216.4,2525.9,2779.7,1619.9,1842.2,2559.3,2396.5,2000.9,1719.4,1320.6,1707.6,1475.3,1400.5,2815,1073.3,1408.2,2055.6,2161.2,1112.3,1159.5,1698.2,2030.2,1923,870.8,1375.7,1433.9,2501.7,2077.8,1125.5,2831.4,2914.6,2264.6,2386.8,1709.4,1947.1,1821.7,1935.1,1299.9,613.8,1442.2,2267.5,1327.7,1089,1242.1,3038.6,1247.6,654,1856.8,1539.5,1579.3,1486.8,1659.3,946.5,1741.2,1473.9,1865.3,921.9,1569.9,1284.8,806.8,1289.1],[353.4,170.7,947.5,329,183.7,237.5,275.7,199.7,205.3,165.1,159.5,89.5,206.3,192.6,413.4,152.9,215.4,274.3,216.5,212.7,107.4,193.9,240,587.6,112.1,141.8,171.7,332,168.7,133.8,536.4,401.4,283.7,303.9,150.3,246.8,190,222.8,150.2,37.7,399.2,295.5,334.2,117.6,111.5,451.4,116.7,72.1,194.1,193.3,157.1,121.7,268,129.1,139.2,163.6,173.3,154.2,162.6,216.3,118.4,68.5],[40.2,10.7,null,29.3,16,18.1,47.2,26.7,8.3,8.7,18.1,4.2,9,23.9,125.8,10.9,14,18.8,15.5,10.6,0,8,20.5,null,11.2,12.5,7,104.9,16.3,23.2,null,76.5,47.7,65.1,11,47.1,21.9,11.8,11.7,2,null,54.6,null,9.2,5.8,67.7,6.5,16.6,14.5,8.3,12.7,27.4,29.8,12.3,14.3,12.3,3.1,4.9,7.7,33.6,2.5,8.1],[2458.8,1045.7,1578.4,2450.7,1436.3,1604.7,2283.6,2196.8,1795.6,1554.3,1161.1,1618,1269,1207.9,2401.5,920.4,1192.8,1781.3,1944.7,899.6,1052.2,1504.3,1790.2,1335.4,758.7,1233.9,1262.2,2169.7,1909,991.6,2295,2513.2,1980.9,2082.9,1559,1700.3,1631.7,1712.3,1149.7,576.2,1043,1972,993.5,971.4,1130.5,2587.2,1130.9,582,1662.7,1346.2,1422.2,1365.1,1391.4,817.5,1602,1310.3,1692.1,767.7,1407.3,1068.6,688.4,1220.6],[0.4532,0.41,0.5015,0.4523,0.4215,0.4152,0.4375,0.4567,0.4117,0.437,0.4573,0.4289,0.4369,0.434,0.4604,0.4168,0.4402,0.4236,0.4003,0.444,0.4332,0.4157,0.4127,0.517,0.4117,0.4059,0.4263,0.4633,0.4504,0.453,0.5988,0.4382,0.4573,0.4566,0.4365,0.4403,0.4166,0.4216,0.4365,0.4145,0.4488,0.4295,0.4461,0.4543,0.4076,0.4345,0.4134,0.4136,0.4277,0.4445,0.4556,0.4307,0.4569,0.4341,0.5021,0.4564,0.4439,0.405,0.4073,0.5375,0.3946,0.437],[7.2,11.4,29.4,10.1,12.1,12.3,11.8,10.3,12.8,14.3,11.6,10.1,13,10.1,9.6,11.2,15.1,14,9.2,13.5,9.3,10.2,10.6,20.7,11,11.4,9.6,9.8,15.7,9.2,13.4,9.5,12.2,9.8,7.7,10.9,14.6,13.6,10.1,7.6,19.6,9.2,11.3,12.7,5.9,9.5,11.8,10.1,14.7,10.7,12,10.1,14,9.1,5.8,10.3,9.1,11.5,10.4,12.5,12.8,14.2],[0.051,0.082,0.094,0.074,0.079,0.067,0.075,0.065,0.07,0.072,0.051,0.078,0.076,0.054,0.064,0.079,0.081,0.08,0.067,0.069,0.097,0.084,0.086,0.072,0.094,0.067,0.073,0.059,0.083,0.048,0.059,0.078,0.065,0.058,0.061,0.055,0.083,0.091,0.073,0.049,0.062,0.057,0.071,0.052,0.055,0.078,0.086,0.067,0.091,0.075,0.049,0.056,0.069,0.069,0.053,0.058,0.074,0.067,0.069,0.052,0.08,0.066]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>county<\/th>\n      <th>index_rate<\/th>\n      <th>violent_rate<\/th>\n      <th>firearm_rate<\/th>\n      <th>property_rate<\/th>\n      <th>Gini_Index<\/th>\n      <th>under_highschool<\/th>\n      <th>unemployment<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row"}},"evals":[],"jsHooks":[]}</script>
-<p><strong>2. Data Visualizaion:</strong> Visualizing the distribution of dependent variables(Crime Rates, including all crimes, violent crimes, firearm crimes, and property crimes) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.</p>
-<p><strong>3. Generalized Additive Models:</strong> Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.</p>
+<div id="htmlwidget-c358ee4d65a662cefc56" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-c358ee4d65a662cefc56">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62"],["Albany","Allegany","Bronx","Broome","Cattaraugus","Cayuga","Chautauqua","Chemung","Chenango","Clinton","Columbia","Cortland","Delaware","Dutchess","Erie","Essex","Franklin","Fulton","Genesee","Greene","Hamilton","Herkimer","Jefferson","Kings","Lewis","Livingston","Madison","Monroe","Montgomery","Nassau","New York","Niagara","Oneida","Onondaga","Ontario","Orange","Orleans","Oswego","Otsego","Putnam","Queens","Rensselaer","Richmond","Rockland","Saratoga","Schenectady","Schoharie","Schuyler","Seneca","Steuben","Saint Lawrence","Suffolk","Sullivan","Tioga","Tompkins","Ulster","Warren","Washington","Wayne","Westchester","Wyoming","Yates"],[2812.2,1216.4,2525.9,2779.7,1619.9,1842.2,2559.3,2396.5,2000.9,1719.4,1320.6,1707.6,1475.3,1400.5,2815,1073.3,1408.2,2055.6,2161.2,1112.3,1159.5,1698.2,2030.2,1923,870.8,1375.7,1433.9,2501.7,2077.8,1125.5,2831.4,2914.6,2264.6,2386.8,1709.4,1947.1,1821.7,1935.1,1299.9,613.8,1442.2,2267.5,1327.7,1089,1242.1,3038.6,1247.6,654,1856.8,1539.5,1579.3,1486.8,1659.3,946.5,1741.2,1473.9,1865.3,921.9,1569.9,1284.8,806.8,1289.1],[353.4,170.7,947.5,329,183.7,237.5,275.7,199.7,205.3,165.1,159.5,89.5,206.3,192.6,413.4,152.9,215.4,274.3,216.5,212.7,107.4,193.9,240,587.6,112.1,141.8,171.7,332,168.7,133.8,536.4,401.4,283.7,303.9,150.3,246.8,190,222.8,150.2,37.7,399.2,295.5,334.2,117.6,111.5,451.4,116.7,72.1,194.1,193.3,157.1,121.7,268,129.1,139.2,163.6,173.3,154.2,162.6,216.3,118.4,68.5],[40.2,10.7,null,29.3,16,18.1,47.2,26.7,8.3,8.7,18.1,4.2,9,23.9,125.8,10.9,14,18.8,15.5,10.6,0,8,20.5,null,11.2,12.5,7,104.9,16.3,23.2,null,76.5,47.7,65.1,11,47.1,21.9,11.8,11.7,2,null,54.6,null,9.2,5.8,67.7,6.5,16.6,14.5,8.3,12.7,27.4,29.8,12.3,14.3,12.3,3.1,4.9,7.7,33.6,2.5,8.1],[2458.8,1045.7,1578.4,2450.7,1436.3,1604.7,2283.6,2196.8,1795.6,1554.3,1161.1,1618,1269,1207.9,2401.5,920.4,1192.8,1781.3,1944.7,899.6,1052.2,1504.3,1790.2,1335.4,758.7,1233.9,1262.2,2169.7,1909,991.6,2295,2513.2,1980.9,2082.9,1559,1700.3,1631.7,1712.3,1149.7,576.2,1043,1972,993.5,971.4,1130.5,2587.2,1130.9,582,1662.7,1346.2,1422.2,1365.1,1391.4,817.5,1602,1310.3,1692.1,767.7,1407.3,1068.6,688.4,1220.6],[0.4532,0.41,0.5015,0.4523,0.4215,0.4152,0.4375,0.4567,0.4117,0.437,0.4573,0.4289,0.4369,0.434,0.4604,0.4168,0.4402,0.4236,0.4003,0.444,0.4332,0.4157,0.4127,0.517,0.4117,0.4059,0.4263,0.4633,0.4504,0.453,0.5988,0.4382,0.4573,0.4566,0.4365,0.4403,0.4166,0.4216,0.4365,0.4145,0.4488,0.4295,0.4461,0.4543,0.4076,0.4345,0.4134,0.4136,0.4277,0.4445,0.4556,0.4307,0.4569,0.4341,0.5021,0.4564,0.4439,0.405,0.4073,0.5375,0.3946,0.437],[7.2,11.4,29.4,10.1,12.1,12.3,11.8,10.3,12.8,14.3,11.6,10.1,13,10.1,9.6,11.2,15.1,14,9.2,13.5,9.3,10.2,10.6,20.7,11,11.4,9.6,9.8,15.7,9.2,13.4,9.5,12.2,9.8,7.7,10.9,14.6,13.6,10.1,7.6,19.6,9.2,11.3,12.7,5.9,9.5,11.8,10.1,14.7,10.7,12,10.1,14,9.1,5.8,10.3,9.1,11.5,10.4,12.5,12.8,14.2],[0.051,0.082,0.094,0.074,0.079,0.067,0.075,0.065,0.07,0.072,0.051,0.078,0.076,0.054,0.064,0.079,0.081,0.08,0.067,0.069,0.097,0.084,0.086,0.072,0.094,0.067,0.073,0.059,0.083,0.048,0.059,0.078,0.065,0.058,0.061,0.055,0.083,0.091,0.073,0.049,0.062,0.057,0.071,0.052,0.055,0.078,0.086,0.067,0.091,0.075,0.049,0.056,0.069,0.069,0.053,0.058,0.074,0.067,0.069,0.052,0.08,0.066]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>county<\/th>\n      <th>index_rate<\/th>\n      <th>violent_rate<\/th>\n      <th>firearm_rate<\/th>\n      <th>property_rate<\/th>\n      <th>Gini_Index<\/th>\n      <th>under_highschool<\/th>\n      <th>unemployment<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[2,3,4,5,6,7,8]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row"}},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="data-visualizaion" class="section level3">
+<h3>Data Visualizaion</h3>
+<p>This section Visualized the distribution of dependent variables(Crime Rates, including all crimes, violent crimes, firearm crimes, and property crimes) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.</p>
+</div>
+<div id="generalized-additive-models" class="section level3">
+<h3>Generalized Additive Models</h3>
+<p>Four Generalized Additive Models are built by setting 4 differnet Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.</p>
 <p>Scaling the independent variables</p>
 <pre class="r"><code>data_merge=mutate(data_merge,Gini_index=as.numeric(scale(Gini_Index)))
 data_merge=mutate(data_merge,Under_highschool=as.numeric(scale(under_highschool)))
 data_merge=mutate(data_merge,Unemployment=as.numeric(scale(unemployment)))</code></pre>
 <p>Building generalized additive models for all crimes, Violent Crimes, Firearm Crimes, and Property Crimes</p>
-<pre class="r"><code>All &lt;- gam(index_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = &quot;gaussian&quot;)
-Violent &lt;- gam(violent_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = &quot;gaussian&quot;)
-Firearm &lt;- gam(firearm_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = &quot;gaussian&quot;)
-Property &lt;- gam(property_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family =&quot;gaussian&quot;)</code></pre>
+<pre class="r"><code>All &lt;- gam(index_rate~s(Gini_index) + s(Under_highschool) + s(Unemployment), data = data_merge, family = &quot;gaussian&quot;)
+Violent &lt;- gam(violent_rate~s(Gini_index) + s(Under_highschool) + s(Unemployment), data = data_merge, family = &quot;gaussian&quot;)
+Firearm &lt;- gam(firearm_rate~s(Gini_index) + s(Under_highschool) + s(Unemployment), data = data_merge, family = &quot;gaussian&quot;)
+Property &lt;- gam(property_rate~s(Gini_index) + s(Under_highschool) + s(Unemployment), data = data_merge, family =&quot;gaussian&quot;)</code></pre>
+</div>
 </div>
 </div>
 <div id="results" class="section level1">
@@ -415,7 +411,7 @@ Property &lt;- gam(property_rate~Gini_index + Under_highschool + Unemployment, d
 <pre class="r"><code>st_transform(data_merge,&quot;+proj=longlat +datum=WGS84&quot;)%&gt;%
   leaflet() %&gt;% addTiles() %&gt;%
   addPolygons(label=paste(data_merge$county,&quot; (Crime Rates=&quot;,data_merge$index_rate,&quot;)&quot;),
-              group = &quot;All Crimess&quot;,
+              group = &quot;All Crimes&quot;,
               color = &quot;white&quot;, 
               dashArray = &quot;3&quot;,
               weight = 1, 
@@ -497,50 +493,382 @@ Property &lt;- gam(property_rate~Gini_index + Under_highschool + Unemployment, d
   )%&gt;%
   addMiniMap()%&gt;%
   frameWidget(height = 600)</code></pre>
-<div id="htmlwidget-013a02c38408bd32366f" style="width:100%;height:600px;" class="widgetframe html-widget"></div>
-<script type="application/json" data-for="htmlwidget-013a02c38408bd32366f">{"x":{"url":"index_files/figure-html//widgets/widget_unnamed-chunk-8.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-17b96a20bdae2ee1144b" style="width:100%;height:600px;" class="widgetframe html-widget"></div>
+<script type="application/json" data-for="htmlwidget-17b96a20bdae2ee1144b">{"x":{"url":"index_files/figure-html//widgets/widget_unnamed-chunk-7.html","options":{"xdomain":"*","allowfullscreen":false,"lazyload":false}},"evals":[],"jsHooks":[]}</script>
 </div>
 <div id="all-crimes-model" class="section level2">
 <h2>All crimes model</h2>
-<pre class="r"><code>summary(All)$p.table</code></pre>
-<pre><code>##                   Estimate Std. Error   t value     Pr(&gt;|t|)
-## (Intercept)      1713.7500   70.38819 24.347124 3.869829e-32
-## Gini_index        284.1923   83.77162  3.392466 1.253434e-03
-## Under_highschool  -86.5994   86.23306 -1.004248 3.194304e-01
-## Unemployment      142.5920   86.49470  1.648564 1.046440e-01</code></pre>
+<pre class="r"><code>print(xtable(summary(All)$s.table), type = &quot;html&quot;)</code></pre>
+<!-- html table generated in R 3.3.1 by xtable 1.8-2 package -->
+<!-- Thu Dec 07 03:00:48 2017 -->
+<table border="1">
+<tr>
+<th>
+</th>
+<th>
+edf
+</th>
+<th>
+Ref.df
+</th>
+<th>
+F
+</th>
+<th>
+p-value
+</th>
+</tr>
+<tr>
+<td align="right">
+s(Gini_index)
+</td>
+<td align="right">
+2.76
+</td>
+<td align="right">
+3.36
+</td>
+<td align="right">
+5.32
+</td>
+<td align="right">
+0.00
+</td>
+</tr>
+<tr>
+<td align="right">
+s(Under_highschool)
+</td>
+<td align="right">
+1.92
+</td>
+<td align="right">
+2.39
+</td>
+<td align="right">
+1.31
+</td>
+<td align="right">
+0.24
+</td>
+</tr>
+<tr>
+<td align="right">
+s(Unemployment)
+</td>
+<td align="right">
+3.74
+</td>
+<td align="right">
+4.59
+</td>
+<td align="right">
+2.36
+</td>
+<td align="right">
+0.06
+</td>
+</tr>
+</table>
 </div>
 <div id="violent-crimes-model" class="section level2">
 <h2>Violent Crimes model</h2>
-<pre class="r"><code>summary(Violent)$p.table</code></pre>
-<pre><code>##                   Estimate Std. Error    t value     Pr(&gt;|t|)
-## (Intercept)      226.94355   12.76172 17.7831472 3.729477e-25
-## Gini_index        65.28806   15.18820  4.2986040 6.656778e-05
-## Under_highschool  62.46514   15.63447  3.9953467 1.845355e-04
-## Unemployment      15.60979   15.68191  0.9954013 3.236759e-01</code></pre>
+<pre class="r"><code>print(xtable(summary(Violent)$s.table), type = &quot;html&quot;)</code></pre>
+<!-- html table generated in R 3.3.1 by xtable 1.8-2 package -->
+<!-- Thu Dec 07 03:00:48 2017 -->
+<table border="1">
+<tr>
+<th>
+</th>
+<th>
+edf
+</th>
+<th>
+Ref.df
+</th>
+<th>
+F
+</th>
+<th>
+p-value
+</th>
+</tr>
+<tr>
+<td align="right">
+s(Gini_index)
+</td>
+<td align="right">
+1.00
+</td>
+<td align="right">
+1.00
+</td>
+<td align="right">
+25.12
+</td>
+<td align="right">
+0.00
+</td>
+</tr>
+<tr>
+<td align="right">
+s(Under_highschool)
+</td>
+<td align="right">
+3.33
+</td>
+<td align="right">
+4.07
+</td>
+<td align="right">
+13.16
+</td>
+<td align="right">
+0.00
+</td>
+</tr>
+<tr>
+<td align="right">
+s(Unemployment)
+</td>
+<td align="right">
+2.16
+</td>
+<td align="right">
+2.70
+</td>
+<td align="right">
+2.45
+</td>
+<td align="right">
+0.08
+</td>
+</tr>
+</table>
 </div>
 <div id="firearm-crimes-model" class="section level2">
 <h2>Firearm Crimes model</h2>
-<pre class="r"><code>summary(Firearm)$p.table</code></pre>
-<pre><code>##                     Estimate Std. Error     t value     Pr(&gt;|t|)
-## (Intercept)      23.82981604   3.312244  7.19446256 2.193812e-09
-## Gini_index       12.00347317   4.904874  2.44725426 1.774266e-02
-## Under_highschool -5.60490140   5.571965 -1.00591103 3.190289e-01
-## Unemployment     -0.05589399   3.881774 -0.01439908 9.885657e-01</code></pre>
+<pre class="r"><code>print(xtable(summary(Firearm)$s.table), type = &quot;html&quot;)</code></pre>
+<!-- html table generated in R 3.3.1 by xtable 1.8-2 package -->
+<!-- Thu Dec 07 03:00:48 2017 -->
+<table border="1">
+<tr>
+<th>
+</th>
+<th>
+edf
+</th>
+<th>
+Ref.df
+</th>
+<th>
+F
+</th>
+<th>
+p-value
+</th>
+</tr>
+<tr>
+<td align="right">
+s(Gini_index)
+</td>
+<td align="right">
+8.26
+</td>
+<td align="right">
+8.83
+</td>
+<td align="right">
+5.47
+</td>
+<td align="right">
+0.00
+</td>
+</tr>
+<tr>
+<td align="right">
+s(Under_highschool)
+</td>
+<td align="right">
+1.00
+</td>
+<td align="right">
+1.00
+</td>
+<td align="right">
+2.60
+</td>
+<td align="right">
+0.11
+</td>
+</tr>
+<tr>
+<td align="right">
+s(Unemployment)
+</td>
+<td align="right">
+1.00
+</td>
+<td align="right">
+1.00
+</td>
+<td align="right">
+0.31
+</td>
+<td align="right">
+0.58
+</td>
+</tr>
+</table>
 </div>
 <div id="property-crimes-model" class="section level2">
 <h2>Property Crimes model</h2>
-<pre class="r"><code>summary(Property)$p.table</code></pre>
-<pre><code>##                   Estimate Std. Error   t value     Pr(&gt;|t|)
-## (Intercept)      1486.8097   61.75167 24.077238 6.976058e-32
-## Gini_index        218.9085   73.49297  2.978631 4.222046e-03
-## Under_highschool -149.0669   75.65240 -1.970418 5.357027e-02
-## Unemployment      126.9880   75.88194  1.673494 9.961569e-02</code></pre>
+<pre class="r"><code>print(xtable(summary(Property)$s.table), type = &quot;html&quot;)</code></pre>
+<!-- html table generated in R 3.3.1 by xtable 1.8-2 package -->
+<!-- Thu Dec 07 03:00:48 2017 -->
+<table border="1">
+<tr>
+<th>
+</th>
+<th>
+edf
+</th>
+<th>
+Ref.df
+</th>
+<th>
+F
+</th>
+<th>
+p-value
+</th>
+</tr>
+<tr>
+<td align="right">
+s(Gini_index)
+</td>
+<td align="right">
+2.48
+</td>
+<td align="right">
+3.03
+</td>
+<td align="right">
+4.83
+</td>
+<td align="right">
+0.00
+</td>
+</tr>
+<tr>
+<td align="right">
+s(Under_highschool)
+</td>
+<td align="right">
+1.27
+</td>
+<td align="right">
+1.47
+</td>
+<td align="right">
+2.51
+</td>
+<td align="right">
+0.07
+</td>
+</tr>
+<tr>
+<td align="right">
+s(Unemployment)
+</td>
+<td align="right">
+3.82
+</td>
+<td align="right">
+4.69
+</td>
+<td align="right">
+2.18
+</td>
+<td align="right">
+0.08
+</td>
+</tr>
+</table>
 </div>
-<div id="comparing-4-models" class="section level2">
-<h2>Comparing 4 models</h2>
-<pre class="r"><code>datatable(AIC(All,Violent,Firearm,Property))</code></pre>
-<div id="htmlwidget-59a3787516041bb2eedb" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-59a3787516041bb2eedb">{"x":{"filter":"none","data":[["All","Violent","Firearm","Property"],[5,5,5,5],[965.195007081927,753.455654345885,526.969338043811,948.962851994322]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>df<\/th>\n      <th>AIC<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[1,2]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row"}},"evals":[],"jsHooks":[]}</script>
+<div id="comparing-model" class="section level2">
+<h2>Comparing model</h2>
+<pre class="r"><code>c1 &lt;- c(&quot;All Crimes&quot;, &quot;Violent Crimes&quot;, &quot;Firearm Crimes&quot;, &quot;Property Crimes&quot;)
+c2 &lt;- c(summary(All)$r.sq, summary(Violent)$r.sq, summary(Firearm)$r.sq, summary(Property)$r.sq)
+rsq &lt;- as.data.frame(c1,c2)
+
+x &lt;-c(&quot;All Crimes&quot;, &quot;Violent Crimes&quot;, &quot;Firearm Crimes&quot;, &quot;Property Crimes&quot;)
+y &lt;-c(summary(All)$r.sq, summary(Violent)$r.sq, summary(Firearm)$r.sq, summary(Property)$r.sq)
+x_name &lt;- &quot;Model&quot;
+y_name &lt;- &quot;R-squared&quot;
+
+df &lt;- data.frame(x,y)
+names(df) &lt;- c(x_name,y_name)
+
+print(xtable(df), type = &quot;html&quot;)</code></pre>
+<!-- html table generated in R 3.3.1 by xtable 1.8-2 package -->
+<!-- Thu Dec 07 03:00:48 2017 -->
+<table border="1">
+<tr>
+<th>
+</th>
+<th>
+Model
+</th>
+<th>
+R-squared
+</th>
+</tr>
+<tr>
+<td align="right">
+1
+</td>
+<td>
+All Crimes
+</td>
+<td align="right">
+0.26
+</td>
+</tr>
+<tr>
+<td align="right">
+2
+</td>
+<td>
+Violent Crimes
+</td>
+<td align="right">
+0.68
+</td>
+</tr>
+<tr>
+<td align="right">
+3
+</td>
+<td>
+Firearm Crimes
+</td>
+<td align="right">
+0.44
+</td>
+</tr>
+<tr>
+<td align="right">
+4
+</td>
+<td>
+Property Crimes
+</td>
+<td align="right">
+0.21
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div id="conclusions" class="section level1">
@@ -555,6 +883,7 @@ Property &lt;- gam(property_rate~Gini_index + Under_highschool + Unemployment, d
 <p>[1]Hsieh, Ching-Chi, and Meredith D. Pugh. “Poverty, income inequality, and violent crime: a meta-analysis of recent aggregate data studies.” Criminal Justice Review 18.2 (1993): 182-202.</p>
 <p>[2]Rogerson, Peter. Statistical methods for geography. Sage, 2001.</p>
 <p>[3]Morenoff, Jeffrey D., and Robert J. Sampson. “Violent crime and the spatial dynamics of neighborhood transition: Chicago, 1970-1990.” Social forces (1997): 31-64.</p>
+<p>[4]Gini, C. W. “Variability and mutability, contribution to the study of statistical distribution and relaitons.” Studi Economico-Giuricici della R (1912).</p>
 </div>
 
 <!-- give the footer some space -->

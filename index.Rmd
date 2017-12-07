@@ -1,18 +1,18 @@
 ---
 title: "Crime Rates Analysis in New York States, 2016"
 author: Penghang Liu
-subtitle: Second Draft
+subtitle: Final Draft
 ---
 
 # Introduction
 
-According to [the 2016 Annual DCJS Performance Report](http://www.criminaljustice.ny.gov/pio/annualreport/2016-annual-dcjs-performance-report.pdf), for the year 2016, crime in New York State reached its lowest point with 375,962 index crimes reported, the fewest since reporting began in 1975. New York is the safest large state among those in the nation with a population of more than 10 million and had the lowest incarceration rate among those states. Based on such a good news, this project conduct a simple analysis to figure out the following questions,
+According to [the 2016 Annual Division of Criminal Justice Services Performance Report](http://www.criminaljustice.ny.gov/pio/annualreport/2016-annual-dcjs-performance-report.pdf), for the year 2016, crime in New York State reached its lowest point with 375,962 index crimes reported, the fewest since reporting began in 1975. New York is the safest large state among those in the nation with a population of more than 10 million and had the lowest incarceration rate among those states. Based on such a good news, this project conduct a simple analysis to figure out the following questions,
 
 **What is the distribution of crime rates of New York State at county level?**
 
 **What are the contributing factors to crimes in New York State among 2016?**
 
-There are many factors that can influence the crime rates, and economy and education may be the significant factors among them. In terms of economy, this project used both income inequality (Gini index) and unemployment rate as independent variables that indicate the economic condition. While for education condition, the proportion of adults without degrees higher than high school is taken as the independent variables. Therefore, the project starts with the following hypothesis,
+There are many factors that can influence the crime rates, and economy and education may be the significant factors among them. In terms of economy, this project used both income inequality (Gini index, developed by the Italian statistician and sociologist Corrado Gini and published in his 1912 paper Variability and Mutability) and unemployment rate as independent variables that indicate the economic condition. While for education condition, the proportion of adults without degrees higher than high school is taken as the independent variables. Therefore, the project starts with the following hypothesis,
 
 **The crime rates are high in those counties with high population density, such as Bronx, New York and Manhattan.**
 
@@ -61,7 +61,8 @@ CrimeData <- read.csv("https://data.ny.gov/resource/vi5m-jckw.csv",stringsAsFact
 
 ##Methods
 
-**1. Data Processing:** Dowloading data, selecting information of interest, formatting data.
+###Data Processing 
+In this section, the crime data are subsetted to all crime rates, violent crime rates, firearm crime rates and property crime rates, and filtered into year 2016. Spatial data (shapefile of New York State), census data and crime data are merged into 
 ```{r, message=F, warning=F}
 library(DT)
 library(leaflet)
@@ -79,20 +80,17 @@ data<-left_join(CrimeData,CensusData,by="county")
 data_merge <- geo_join(ny, data, "NAME_2", "county") %>% st_as_sf()
 ```
 
-These are the variables in the data:
-```{r}
-names(data_merge)
-```
-
 Table 1. Crimes, Income Inequality, Education Attainment, Unemployment in New York State, 2016
 ```{r}
 data1 <- subset(data, select = c(county,index_rate,violent_rate,firearm_rate,property_rate,Gini_Index,under_highschool,unemployment))
 datatable(data1)
 ```
 
-**2. Data Visualizaion:** Visualizing the distribution of dependent variables(Crime Rates, including all crimes, violent crimes, firearm crimes, and property crimes) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.
+###Data Visualizaion
+This section Visualized the distribution of dependent variables(Crime Rates, including all crimes, violent crimes, firearm crimes, and property crimes) and independent variables(Gini Index, Education attainment, Unemployment Rate) over 62 counties in NY State.
 
-**3. Generalized Additive Models:** Building Multiple Regression Model by setting Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.
+###Generalized Additive Models
+Four Generalized Additive Models are built by setting 4 differnet Crime rates as dependent variables and Gini Index, education attainment, unemployment rate as independent variables. The output will provide coefficients of the independent varables, which provide knowledge for evluating the influence of these fators on Crimes.
 
 Scaling the independent variables
 ```{r}
@@ -104,10 +102,10 @@ data_merge=mutate(data_merge,Unemployment=as.numeric(scale(unemployment)))
 
 Building generalized additive models for all crimes, Violent Crimes, Firearm Crimes, and Property Crimes
 ```{r}
-All <- gam(index_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = "gaussian")
-Violent <- gam(violent_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = "gaussian")
-Firearm <- gam(firearm_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family = "gaussian")
-Property <- gam(property_rate~Gini_index + Under_highschool + Unemployment, data = data_merge, family ="gaussian")
+All <- gam(index_rate~s(Gini_index) + s(Under_highschool) + s(Unemployment), data = data_merge, family = "gaussian")
+Violent <- gam(violent_rate~s(Gini_index) + s(Under_highschool) + s(Unemployment), data = data_merge, family = "gaussian")
+Firearm <- gam(firearm_rate~s(Gini_index) + s(Under_highschool) + s(Unemployment), data = data_merge, family = "gaussian")
+Property <- gam(property_rate~s(Gini_index) + s(Under_highschool) + s(Unemployment), data = data_merge, family ="gaussian")
 ```
 
 
@@ -119,7 +117,7 @@ Property <- gam(property_rate~Gini_index + Under_highschool + Unemployment, data
 st_transform(data_merge,"+proj=longlat +datum=WGS84")%>%
   leaflet() %>% addTiles() %>%
   addPolygons(label=paste(data_merge$county," (Crime Rates=",data_merge$index_rate,")"),
-              group = "All Crimess",
+              group = "All Crimes",
               color = "white", 
               dashArray = "3",
               weight = 1, 
@@ -204,28 +202,40 @@ st_transform(data_merge,"+proj=longlat +datum=WGS84")%>%
 ```
 
 ##All crimes model
-```{r}
-summary(All)$p.table
+```{r xtable, results="asis"}
+print(xtable(summary(All)$s.table), type = "html")
 ```
 
 ##Violent Crimes model
-```{r}
-summary(Violent)$p.table
+```{r  results="asis"}
+print(xtable(summary(Violent)$s.table), type = "html")
 ```
 
 ##Firearm Crimes model
-```{r}
-summary(Firearm)$p.table
+```{r results="asis"}
+print(xtable(summary(Firearm)$s.table), type = "html")
 ```
 
 ##Property Crimes model
-```{r}
-summary(Property)$p.table
+```{r results="asis"}
+print(xtable(summary(Property)$s.table), type = "html")
 ```
 
-##Comparing 4 models
-```{r, message=F, warning=F}
-datatable(AIC(All,Violent,Firearm,Property))
+##Comparing model
+```{r, message=F, warning=F, results="asis"}
+c1 <- c("All Crimes", "Violent Crimes", "Firearm Crimes", "Property Crimes")
+c2 <- c(summary(All)$r.sq, summary(Violent)$r.sq, summary(Firearm)$r.sq, summary(Property)$r.sq)
+rsq <- as.data.frame(c1,c2)
+
+x <-c("All Crimes", "Violent Crimes", "Firearm Crimes", "Property Crimes")
+y <-c(summary(All)$r.sq, summary(Violent)$r.sq, summary(Firearm)$r.sq, summary(Property)$r.sq)
+x_name <- "Model"
+y_name <- "R-squared"
+
+df <- data.frame(x,y)
+names(df) <- c(x_name,y_name)
+
+print(xtable(df), type = "html")
 ```
 
 # Conclusions
@@ -246,4 +256,6 @@ While the generalized additive model does possess the power to explain the viole
 [2]Rogerson, Peter. Statistical methods for geography. Sage, 2001.
 
 [3]Morenoff, Jeffrey D., and Robert J. Sampson. "Violent crime and the spatial dynamics of neighborhood transition: Chicago, 1970-1990." Social forces (1997): 31-64.
+
+[4]Gini, C. W. "Variability and mutability, contribution to the study of statistical distribution and relaitons." Studi Economico-Giuricici della R (1912).
 
